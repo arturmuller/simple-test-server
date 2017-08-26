@@ -20,12 +20,12 @@ const routes = {
   "/hello": {
     status: 200,
     body: "Hello world!",
-    headers: { accept: "text/plain" },
+    headers: { "content-type": "text/plain" },
   },
   "default": {
     status: 404,
     body: "Not found",
-    headers: { accept: "text/plain" },
+    headers: { "content-type": "text/plain" },
   },
 };
 

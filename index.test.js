@@ -4,16 +4,23 @@ const createTestServer = require("./index");
 const got = require("got");
 
 const PORT = 8080;
+const HOST = `http://localhost:${PORT}`;
+
 const routes = {
   "/hello": {
     status: 200,
     body: "Hello world!",
-    headers: { accept: "text/plain" },
+    headers: { "content-type": "text/plain" },
+  },
+  "/object": {
+    status: 200,
+    body: { foo: "bar" },
+    headers: { "content-type": "application/json" },
   },
   default: {
     status: 404,
     body: "Not found",
-    headers: { accept: "text/plain" },
+    headers: { "content-type": "text/plain" },
   },
 };
 
@@ -27,20 +34,40 @@ afterAll(() => {
   server.close();
 });
 
-test("Should respond based on correct path", async () => {
-  const { body, statusCode, headers } = await got(`localhost:${PORT}/hello`);
+test("Validates route config at startup", async () => {
+  const fn1 = () => createTestServer(0, {});
+  expect(fn1).toThrow(/default/);
+
+  const fn2 = () => createTestServer(0, { default: { status: "nope" } });
+  expect(fn2).toThrow(/number/);
+
+  const fn3 = () => createTestServer(0, { default: {} });
+  expect(fn3).toThrow(/status/);
+});
+
+test("Responds based on a supplied route path", async () => {
+  const { body, statusCode, headers } = await got(`${HOST}/hello`);
   expect(statusCode).toBe(200);
-  expect(headers.accept).toBe("text/plain");
+  expect(headers["content-type"]).toBe("text/plain");
   expect(body).toBe("Hello world!");
 });
 
-test("Should fall back to default on unknown route", async () => {
+test("Falls back to `default` when path is not found", async () => {
   try {
-    await got(`localhost:${PORT}/unknown`);
+    await got(`${HOST}/unknown`);
   } catch (error) {
     const { body, statusCode, headers } = error.response;
     expect(statusCode).toBe(404);
-    expect(headers.accept).toBe("text/plain");
+    expect(headers["content-type"]).toBe("text/plain");
     expect(body).toBe("Not found");
   }
+});
+
+test("Stringifies response `body` if passed on object", async () => {
+  const options = { json: true };
+  const { body, statusCode, headers } = await got(`${HOST}/object`, options);
+
+  expect(statusCode).toBe(200);
+  expect(headers["content-type"]).toBe("application/json");
+  expect(body).toEqual({ foo: "bar" });
 });
