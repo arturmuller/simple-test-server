@@ -4,7 +4,7 @@ const createTestServer = require("./index");
 const got = require("got");
 
 const PORT = 8080;
-const HOST = `http://localhost:${PORT}`;
+const ORIGIN = `http://localhost:${PORT}`;
 
 const routes = {
   "/hello": {
@@ -46,7 +46,7 @@ test("Validates route config at startup", async () => {
 });
 
 test("Responds based on a supplied route path", async () => {
-  const { body, statusCode, headers } = await got(`${HOST}/hello`);
+  const { body, statusCode, headers } = await got(`${ORIGIN}/hello`);
   expect(statusCode).toBe(200);
   expect(headers["content-type"]).toBe("text/plain");
   expect(body).toBe("Hello world!");
@@ -54,7 +54,7 @@ test("Responds based on a supplied route path", async () => {
 
 test("Falls back to `default` when path is not found", async () => {
   try {
-    await got(`${HOST}/unknown`);
+    await got(`${ORIGIN}/unknown`);
   } catch (error) {
     const { body, statusCode, headers } = error.response;
     expect(statusCode).toBe(404);
@@ -65,7 +65,7 @@ test("Falls back to `default` when path is not found", async () => {
 
 test("Stringifies response `body` if passed on object", async () => {
   const options = { json: true };
-  const { body, statusCode, headers } = await got(`${HOST}/object`, options);
+  const { body, statusCode, headers } = await got(`${ORIGIN}/object`, options);
 
   expect(statusCode).toBe(200);
   expect(headers["content-type"]).toBe("application/json");
